@@ -49,6 +49,8 @@ public:
 
     VectorGrid computeGeodesicVelocityField() const;
 
+    std::vector<vec> integrateGeodesic(const vec& target,scalar dt,const ScalarGrid3& U, const VectorGrid3 &V) const;
+
     Vec run(SliceIndex source);
     Vec run(int node_idx);
 

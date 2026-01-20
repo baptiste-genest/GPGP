@@ -133,7 +133,10 @@ public:
             return a.second > b.second;
         });
         for (const auto& x : stamps){
-            std::cout << x.first << " : " << x.second/s << "\n";
+            if (relative)
+            std::cout << x.first << " : " << 100*x.second/s << "%\n";
+            else
+                std::cout << x.first << " : " << x.second/s << "\n";
         }
         std::cout << "         END     REPORT            " << std::endl << std::endl;
     }

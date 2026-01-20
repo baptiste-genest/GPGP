@@ -129,5 +129,6 @@ SGP::scalar SGP::StencilReachHeuristic(const PosList<dim> &GD, const GPIS &BH,sc
 #pragma omp critical
         max_res = std::max(max_res, local_max);
     }
+    spdlog::info("max stencil reach {}",max_res);
     return feature_size/std::max(max_res,2);
 }

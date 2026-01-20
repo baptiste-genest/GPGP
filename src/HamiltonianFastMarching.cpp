@@ -28,10 +28,10 @@ void SGP::HamiltonianFastMarching::postProcess(int p)
 
 void SGP::HamiltonianFastMarching::precomputeStencils()
 {
-    computeVoronoiStencil();
+    if (nodes[0].stencil.elements.empty())
+        computeVoronoiStencil();
 
     auto m = getNumVariables();
-// #pragma omp parallel for
     for (const auto& [h,node] : nodes) {
         int id = node.id;
         const auto& decomp = node.stencil;
@@ -47,6 +47,27 @@ void SGP::HamiltonianFastMarching::precomputeStencils()
             }
         }
     }
+}
+
+std::vector<SGP::vec> SGP::HamiltonianFastMarching::integrateGeodesic(const vec &target, scalar dt, const ScalarGrid3 &U, const VectorGrid3 &V) const
+{
+    std::vector<vec> path;
+    path.push_back(target);
+    vec p = target;
+
+    AffineMap3 E = getEmbedder();
+
+    scalar val = Grid3D::lerpNonSquare(U,p,E);
+
+    int max_iter = 10000;
+    for (auto iter : range(max_iter)) {
+        p -= dt*Grid3D::lerpNonSquare(V,p,E);
+        path.push_back(p);
+        if (std::abs(Grid3D::lerpNonSquare(U,p,E)) < 1e-6)
+            break;
+    }
+
+    return path;
 }
 
 

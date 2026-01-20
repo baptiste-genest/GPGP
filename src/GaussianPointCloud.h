@@ -188,7 +188,7 @@ public:
     scalar estimateScale() const {
         scalar s = 0;
         for ( auto i : range(size()))
-            s += std::sqrt(getMoment(i).norm());
+            s += std::sqrt(4./std::sqrt(3.)*getMoment(i).norm());
         return s/size();
     }
 

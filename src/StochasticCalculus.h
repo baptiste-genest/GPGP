@@ -213,6 +213,7 @@ public:
     ScalarGrid getValueField(scalar fill = 0) const;
 
     Vec getGPISMean() const;
+    Vec getMu() const;
     Points<dim> embedNarrowBand() const;
 
     scalar expectedMass() {

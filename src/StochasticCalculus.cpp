@@ -83,6 +83,14 @@ SGP::StochasticCalculus::StochasticCalculus(const SparseNarrowBand &input): bbox
     }
 }
 
+SGP::Vec SGP::StochasticCalculus::getMu() const
+{
+    Vec rslt = Vec::Zero(nodes.size());
+    for (const auto& [I,node] : nodes)
+        rslt(node.id) = node.mu;
+    return rslt;
+}
+
 SGP::smat SGP::StochasticCalculus::buildMassMatrix()
 {
     return buildDiagMu(false)*std::pow(getDx(),dim);

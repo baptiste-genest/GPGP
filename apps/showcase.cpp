@@ -31,7 +31,7 @@
 
 using namespace SGP;
 
-int N = 100;
+int N = -1;
 
 #include <Spectra/SymEigsSolver.h>
 #include <Spectra/SymGEigsSolver.h>
@@ -61,28 +61,6 @@ std::pair<Mat, Vec> computeEigenModesSPD(const smat &A, const smat &M, int nb) {
 }
 
 
-vecs integrateGeodesic(const vec& target,scalar dt,const ScalarGrid& U, const VectorGrid &V) {
-    vecs path;
-    path.push_back(target);
-
-    vec p = target;
-
-    scalar val = Grid3D::lerp(U,p);
-
-    int max_iter = 100000;
-    for (auto iter : range(max_iter)) {
-        p -= dt*Grid3D::lerp(V,p);
-        path.push_back(p);
-        // std::cout << Grid3D::lerp(U,p) << " " << Grid3D::lerp(V,p) << std::endl;
-        if (std::abs(Grid3D::lerp(U,p)) < 1e-6)
-            break;
-    }
-
-    return path;
-}
-
-
-
 Vec format(const Vec& x) {
     scalar min_x = x.minCoeff();
     scalar max_x = x.maxCoeff();
@@ -104,9 +82,10 @@ HamiltonianFastMarching calc;
 int eigenfunction = 0;
 
 std::string input;
-scalar reg = 0.01;
-scalar beta = 2.3;
+scalar reg = 0.4;
+scalar beta = 3;
 scalar eps = 0.01;
+int qmc = 512;
 
 Mat EigenVectors;
 polyscope::SurfaceMesh* surf_iso = nullptr;
@@ -121,10 +100,16 @@ bool green = false;
 
 void init () {
 
+    StochasticCalculus::NQMC = qmc;
+
     GaussianDipoles GD = GaussianDipoles(input);
-    GD.normalize(1.5);
+    // GD.normalize(0.8);
+
+    spdlog::info("loaded {} gaussian position/normal pairs",GD.size());
 
     scalar lfs = GD.estimateScale();
+
+    spdlog::info("estimated scale {}",lfs);
 
 
 
@@ -173,36 +158,39 @@ void init () {
             return x.getMean()(0);
         });
         field = pcgrid->addNodeScalarQuantity("GPIS mean",value_field.data());
+        pcgrid->addNodeScalarQuantity("mu",calc.getProbField().data());
     }
     else {
 
         auto narrow = BuildAdaptiveNarrowBand(GD,BHSPSR,h,eps);
-        pcgrid = PlotNarrowBand(narrow,"narrow");
-        profiler.tick("build narrow band and fields",true);
+        iso = narrow.iso;
         calc = HamiltonianFastMarching(narrow);
+        profiler.tick("build narrow band and fields",true);
+        pcgrid = PlotNarrowBand(narrow,"narrow");
 
         field = pcgrid->addNodeScalarQuantity("GPIS mean",calc.extendFill(calc.getGPISMean()).data());
         profiler.tick("extend mean field to bounding box grid (for plot only)",true);
     }
+
+    spdlog::info("{} variables in narrow band",calc.getNumVariables());
 
     // extract mean iso
     field->setGridcubeVizEnabled(false);
     field->setIsosurfaceLevel(iso);
     field->setIsosurfaceVizEnabled(true);
     field->setEnabled(true);
+    pcgrid->setEnabled(false);
     surf_iso = field->registerIsosurfaceAsMesh("mean surface");
     surf_iso->setShadeStyle(polyscope::MeshShadeStyle::Smooth);
 
     auto NB = calc.embedNarrowBand();
 
     narrow_band = polyscope::registerPointCloud("narrow band",NB.transpose());
+    narrow_band->addScalarQuantity("mu",calc.getMu())->setEnabled(true);
 
     profiler.start();
     smat M = calc.buildMassMatrix();
     smat L = calc.buildVoronoiLaplace();
-
-    // smat grad = calc.buildGradient();
-    // smat div = calc.buildIntegratedDivergence();
     profiler.tick("build operators",true);
 
 
@@ -213,56 +201,58 @@ void init () {
     if (eigenfunction) {
         EigenVectors = computeEigenModesSPD(L,M,eigenfunction).first;
         auto rslt_eig = calc.extend(EigenVectors.col(eigenfunction-1));
-        surf_iso->addVertexScalarQuantity("eig",format(sampleOnMesh(surf_iso,rslt_eig)));
+        surf_iso->addVertexScalarQuantity("eig",format(sampleOnMesh(surf_iso,rslt_eig,calc.getEmbedder())));
         pcgrid->addNodeScalarQuantity("eig",rslt_eig.data())->setEnabled(false);
     }
 
     if (HFM) {
-        int s = MostAlignedPoint(NB,vec(1,0,0));
+        int s = GetClosestPoint(NB,ClosestVertex(surf_iso,vec(-0.286,-0.141,-0.181)));
         profiler.start();
         calc.precomputeStencils();
-        profiler.tick("compute stencils",true);
+        profiler.tick("compute stencils for fast marching",true);
         Vec U = calc.run(s);
-        auto V = calc.computeGeodesicVelocityField();
+        profiler.tick("compute distance",true);
 
         auto rslt = calc.extend(U,U.maxCoeff()+1);
 
-        // vec x = MostAlignedVertex(surf_iso,vec(0,1,0));
-        vec x = ClosestVertex(surf_iso,vec(-0.337,-0.131,-0.212));
-        // vec x = ClosestVertex(surf_iso,vec(-0.232,-0.0259,0.5959));
+        profiler.start();
+        auto V = calc.computeGeodesicVelocityField();
+        profiler.tick("extract velocity field",true);
 
-        auto path = integrateGeodesic(x,100,rslt,V);
+        auto path = calc.integrateGeodesic(MostAlignedVertex(surf_iso,vec(1,0,1)),100,rslt,V);
+        profiler.tick("integrate geodesic",true);
         auto curve = polyscope::registerCurveNetworkLine("geodesic",path);
 
-        auto rslt_iso = format(sampleOnMesh(surf_iso,rslt));
+        auto rslt_iso = format(sampleOnMesh(surf_iso,rslt,calc.getEmbedder()));
         auto pc_dist = surf_iso->addVertexDistanceQuantity("input solution",rslt_iso);
         pc_dist->setIsolinesEnabled(true);
-        // pc_dist->setIsolinePeriod(0.005,true);
         pc_dist->setIsolineWidth(0.005,true);
-        // curve->setEnabled(false);
+        pc_dist->setEnabled(true);
     }
 
 
     if (green) {
         Vec S = Vec::Zero(calc.getNumVariables());
-        auto s = MostAlignedVertex(surf_iso,vec(1,0,0.1));
-        // auto s = ClosestVertex(surf_iso,vec(-0.337,-0.131,-0.212));
+        auto s = ClosestVertex(surf_iso,vec(-0.286,-0.141,-0.181));
         S(GetClosestPoint(NB,s)) = 1;
 
         SPDSolver poisson_solver(L);
 
         Vec RHS = M*S;
+        profiler.start();
+        auto sol = calc.extend(poisson_solver.solve(RHS));
+        profiler.tick("green solve time",true);
 
-        Vec green = format(sampleOnMesh(surf_iso,calc.extend(poisson_solver.solve(RHS))));
-        Vec green_log = format_log(sampleOnMesh(surf_iso,calc.extend(poisson_solver.solve(RHS))));
+        Vec green = format(sampleOnMesh(surf_iso,sol,calc.getEmbedder()));
+        Vec green_log = format_log(sampleOnMesh(surf_iso,sol,calc.getEmbedder()));
 
-        auto pc_green = surf_iso->addVertexScalarQuantity("green's function",green);
-        surf_iso->addVertexScalarQuantity("green's function log",green_log);
+        surf_iso->addVertexScalarQuantity("green's function",green);
+        auto pc_green =surf_iso->addVertexScalarQuantity("green's function log",green_log);
         pc_green->setColorMap("magma");
         pc_green->setIsolinesEnabled(true);
     }
 
-
+    profiler.profile();
 }
 
 int eig_nb = 0;
@@ -270,7 +260,7 @@ void myCallBack() {
     if (eigenfunction) {
         if (ImGui::SliderInt("eigenvector number",&eig_nb,0,EigenVectors.cols()-1)){
             auto rslt_eig = calc.extend(EigenVectors.col(eig_nb));
-            surf_iso->addVertexScalarQuantity("eig",format(sampleOnMesh(surf_iso,rslt_eig)));
+            surf_iso->addVertexScalarQuantity("eig",format(sampleOnMesh(surf_iso,rslt_eig,calc.getEmbedder())));
         }
     }
 }
@@ -278,10 +268,11 @@ void myCallBack() {
 int main(int argc, char** argv) {
     CLI::App app("Uncertainty aware geometry processing on GPIS") ;
 
+    app.add_option("--input", input, "input (position/weighted normal pairs with gaussian distributions)");
     app.add_option("--grid_size", N, "resolution of the grid, if negative adaptive resolution (default -1)");
     app.add_option("--reg", reg, "regularized winding number parameter (default 0.4)");
     app.add_option("--beta", beta, "barnes hutt approx parameter (default 3)");
-    app.add_option("--epsilon", eps, "narrow band epsilon (default 0.01)");
+    app.add_option("--eta", eps, "narrow band epsilon (default 0.01)");
     app.add_flag("--spectra",eigenfunction,"number of eigenfunctions to compute (default 0) WARNING CAN BE LONG");
     // app.add_flag("--hodge",hodge,"Hodge decomposition");
     app.add_flag("--geodesic",HFM,"compute geodesic distance");

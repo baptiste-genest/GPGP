@@ -66,6 +66,10 @@ SGP::scalar SGP::Grid3D::lerp(const ScalarGrid3 &G, const vec &x) {
     int i1 = std::ceil(xi(0));
     int j1 = std::ceil(xi(1));
     int k1 = std::ceil(xi(2));
+    if (!G.validIndex(SliceIndex3{i0,j0,k0}))
+        return 0;
+    if (!G.validIndex(SliceIndex3{i1,j1,k1}))
+        return 0;
     scalar xd = xi(0) - i0;
     scalar yd = xi(1) - j0;
     scalar zd = xi(2) - k0;
@@ -97,6 +101,10 @@ SGP::ScalarGrid3 SGP::Grid3D::Splat(const PointGrid3 &G, const vec &x)
     int i1 = std::ceil(xi(0));
     int j1 = std::ceil(xi(1));
     int k1 = std::ceil(xi(2));
+    if (!G.validIndex(SliceIndex3{i0,j0,k0}))
+        return 0;
+    if (!G.validIndex(SliceIndex3{i1,j1,k1}))
+        return 0;
     scalar xd = xi(0) - i0;
     scalar yd = xi(1) - j0;
     scalar zd = xi(2) - k0;
@@ -125,6 +133,12 @@ SGP::scalar SGP::Grid3D::lerpNonSquare(const ScalarGrid3 &G, const vec &x, const
     int i1 = std::ceil(xi(0));
     int j1 = std::ceil(xi(1));
     int k1 = std::ceil(xi(2));
+    // if out of bounds, clamp
+    if (!G.validIndex(SliceIndex3{i0,j0,k0}))
+        return 0;
+    if (!G.validIndex(SliceIndex3{i1,j1,k1}))
+        return 0;
+
     scalar xd = xi(0) - i0;
     scalar yd = xi(1) - j0;
     scalar zd = xi(2) - k0;
@@ -154,6 +168,43 @@ SGP::PointGrid3 SGP::Grid3D::getGrid(const SliceIndex3 &sizes, const GridEmbedde
             for(int k=0;k<sizes[2];k++)
                 G(i,j,k) = embedder*vec(i,j,k);
     return G;
+}
+
+SGP::vec SGP::Grid3D::lerpNonSquare(const VectorGrid3 &G, const vec &x, const AffineMap3 &map)
+{
+
+    AffineMap3 inv = map.inverse();
+    vec xi = inv * x;
+    int i0 = std::floor(xi(0));
+    int j0 = std::floor(xi(1));
+    int k0 = std::floor(xi(2));
+    int i1 = std::ceil(xi(0));
+    int j1 = std::ceil(xi(1));
+    int k1 = std::ceil(xi(2));
+    // if out of bounds, clamp
+    if (!G.validIndex(SliceIndex3{i0,j0,k0}))
+        return vec::Zero();
+    if (!G.validIndex(SliceIndex3{i1,j1,k1}))
+        return vec::Zero();
+
+    scalar xd = xi(0) - i0;
+    scalar yd = xi(1) - j0;
+    scalar zd = xi(2) - k0;
+    vec c000 = G(i0,j0,k0);
+    vec c001 = G(i0,j0,k1);
+    vec c010 = G(i0,j1,k0);
+    vec c011 = G(i0,j1,k1);
+    vec c100 = G(i1,j0,k0);
+    vec c101 = G(i1,j0,k1);
+    vec c110 = G(i1,j1,k0);
+    vec c111 = G(i1,j1,k1);
+    vec c00 = c000 * (1 - xd) + c100 * xd;
+    vec c01 = c001 * (1 - xd) + c101 * xd;
+    vec c10 = c010 * (1 - xd) + c110 * xd;
+    vec c11 = c011 * (1 - xd) + c111 * xd;
+    vec c0 = c00 * (1 - yd) + c10 * yd;
+    vec c1 = c01 * (1 - yd) + c11 * yd;
+    return c0 * (1 - zd) + c1 * zd;
 }
 
 int SGP::Grid3D::closestOnGrid(const vec &x, const PointGrid3 &G) {
