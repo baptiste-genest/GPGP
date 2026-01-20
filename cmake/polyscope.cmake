@@ -9,8 +9,9 @@ include(CPM)
 
 CPMAddPackage(
   NAME polyscope
-  VERSION 2.5.0
+  #VERSION 2.5.0
   GITHUB_REPOSITORY "nmwsharp/polyscope"
+  GIT_TAG e91a70909b934176f4d3313765ca6230d21943d0
 )
 
 #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG_OLD}")
