@@ -84,7 +84,7 @@ int eigenfunction = 0;
 std::string input;
 scalar reg = 0.5;
 scalar beta = 3;
-scalar eps = 0.01;
+scalar eps = 0.1;
 int qmc = 512;
 
 Mat EigenVectors;
