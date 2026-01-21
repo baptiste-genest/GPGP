@@ -12,7 +12,7 @@
 #include "../src/MeshSampling.h"
 #include "../src/StochasticPoissonSurfaceReconstruction.h"
 #include "../src/HamiltonianFastMarching.h"
-#include "eigen3/Eigen/IterativeLinearSolvers"
+#include "Eigen/IterativeLinearSolvers"
 
 #include "../src/BarnesHuttSPSR.h"
 #include "../src/StochasticBarnesHutt.h"
