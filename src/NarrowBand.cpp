@@ -114,10 +114,10 @@ SGP::scalar SGP::StencilReachHeuristic(const PosList<dim> &GD, const GPIS &BH,sc
 {
     scalar iso = GetAverageIso(GD,BH);
     int max_res = 0;
-#pragma omp parallel
+// #pragma omp parallel
     {
         int local_max = 0;
-#pragma omp for nowait
+// #pragma omp for nowait
         for (int i = 0; i < (int)GD.size(); ++i) {
             auto G = StochasticCalculus::computeDiffusionTensor(BH.predict(GD.getPos(i)), iso);
             auto red = ComputeVoronoiReduction(G);
@@ -126,7 +126,7 @@ SGP::scalar SGP::StencilReachHeuristic(const PosList<dim> &GD, const GPIS &BH,sc
                 // local_max = std::max(local_max, e.lpNorm<Eigen::Infinity>());
             }
         }
-#pragma omp critical
+// #pragma omp critical
         max_res = std::max(max_res, local_max);
     }
     spdlog::info("max stencil reach {}",max_res);

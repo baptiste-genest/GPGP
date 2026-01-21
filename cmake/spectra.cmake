@@ -9,7 +9,6 @@ include(eigen)
 
 CPMAddPackage(
     NAME Spectra
-    VERSION 1.1.0
+    VERSION 1.2.0
     GITHUB_REPOSITORY yixuan/spectra
-    PATCHES "spectra.patch"
 )

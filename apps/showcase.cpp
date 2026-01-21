@@ -82,7 +82,7 @@ HamiltonianFastMarching calc;
 int eigenfunction = 0;
 
 std::string input;
-scalar reg = 0.4;
+scalar reg = 0.5;
 scalar beta = 3;
 scalar eps = 0.01;
 int qmc = 512;
@@ -103,13 +103,15 @@ void init () {
     StochasticCalculus::NQMC = qmc;
 
     GaussianDipoles GD = GaussianDipoles(input);
-    // GD.normalize(0.8);
+    // GD.normalize(1.01);
 
     spdlog::info("loaded {} gaussian position/normal pairs",GD.size());
 
     scalar lfs = GD.estimateScale();
 
     spdlog::info("estimated scale {}",lfs);
+
+    // StochasticCalculus::max_mu = 10;
 
 
 
@@ -206,7 +208,9 @@ void init () {
     }
 
     if (HFM) {
-        int s = GetClosestPoint(NB,ClosestVertex(surf_iso,vec(-0.286,-0.141,-0.181)));
+        // int s = GetClosestPoint(NB,ClosestVertex(surf_iso,vec(-0.286,-0.141,-0.191)));
+        int s = GetClosestPoint(NB,ClosestVertex(surf_iso,vec(-0.316,-0.113,-0.236)));
+        // int s = GetClosestPoint(NB,MostAlignedVertex(surf_iso,vec(-0.286,-0.141,-0.191)));
         profiler.start();
         calc.precomputeStencils();
         profiler.tick("compute stencils for fast marching",true);
@@ -228,6 +232,8 @@ void init () {
         pc_dist->setIsolinesEnabled(true);
         pc_dist->setIsolineWidth(0.005,true);
         pc_dist->setEnabled(true);
+
+        pcgrid->addNodeScalarQuantity("geodesic_distance",rslt.data())->setEnabled(false);
     }
 
 
