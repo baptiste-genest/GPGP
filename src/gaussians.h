@@ -2,7 +2,7 @@
 #define GAUSSIANS_H
 
 #include "StochasticGeometryProcessing.h"
-#include "eigen3/Eigen/Cholesky"
+#include "Eigen/Cholesky"
 #include "PointCloud.h"
 #include "sampling.h"
 #include "QMC.h"
