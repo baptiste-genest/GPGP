@@ -12,10 +12,11 @@ include(eigen)
 include(polyscope)
 include(geometry-central)
 include(spdlog)
+include(spectra)
 
 file(GLOB SOURCE
     "src/*"
 )
 
 add_executable(showcase apps/showcase.cpp ${SOURCE} )
-target_link_libraries(showcase polyscope spdlog Eigen3::Eigen OpenMP::OpenMP_CXX geometry-central)
+target_link_libraries(showcase polyscope spdlog Eigen3::Eigen OpenMP::OpenMP_CXX Spectra geometry-central)
