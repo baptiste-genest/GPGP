@@ -1,4 +1,10 @@
+
 # "Uncertainty-Aware Geometry processing on Gaussian Process Implicit Surfaces" Compilation Guide
+
+This repository contains the source code of the SIGGRAPH 2026 paper *"[Uncertainty-Aware Geometry processing on Gaussian Process Implicit Surfaces](https://baptiste-genest.github.io/publications/#gpgp)", Baptiste Genest, David Coeurjolly.*
+<img width="1993" height="729" alt="teaser" src="https://github.com/user-attachments/assets/a412d37e-df5b-46a7-bbfd-c6fa776eaee3" />
+
+
 
 This guide explains how to compile the project using CMake, focusing on the top-level `CMakeLists.txt`. It also lists all dependencies and how to obtain them.
 
