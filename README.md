@@ -60,6 +60,6 @@ the parameters are described with names that match the ones used in the paper.
 
 to reproduce the figure 8, you can execute
 ```bash
-./showcase --input ../data/spot_low_variance.gdp --eta 0.001 --geodesic 
+./showcase --input ../data/spot_low_variance.gdp --eta 0.001 --grid_size 300 --geodesic 
 ./showcase --input ../data/spot_high_variance.gdp --eta 1 --geodesic 
 ```
