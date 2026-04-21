@@ -63,8 +63,13 @@ Note that all parameters can be described with the help command :
 ```
 the parameters are described with names that match the ones used in the paper.
 
-to reproduce the figure 8, you can execute
+To reproduce the figure 8, you can execute:
 ```bash
 ./showcase --input ../data/spot_low_variance.gdp --eta 0.001 --grid_size 300 --geodesic 
 ./showcase --input ../data/spot_high_variance.gdp --eta 1 --geodesic 
+```
+
+You can generate your own Gaussian dipoles files using the soupify problem
+```bash
+./soupify --input pathto/mesh.obj --output test.gdp --assumed_noise 1
 ```
