@@ -1,4 +1,10 @@
-# "Uncertainty-Aware Geometry processing on Gaussian Process Implicit Surfaces" Compilation Guide
+
+# Uncertainty-Aware Geometry processing on Gaussian Process Implicit Surfaces -- Source code
+
+This repository contains the source code of the ACM TOG / SIGGRAPH 2026 paper *"[Uncertainty-Aware Geometry processing on Gaussian Process Implicit Surfaces](https://baptiste-genest.github.io/publications/#gpgp)", Baptiste Genest, David Coeurjolly.*
+<img width="1993" height="729" alt="teaser" src="https://github.com/user-attachments/assets/a412d37e-df5b-46a7-bbfd-c6fa776eaee3" />
+
+
 
 This guide explains how to compile the project using CMake, focusing on the top-level `CMakeLists.txt`. It also lists all dependencies and how to obtain them.
 
@@ -8,7 +14,6 @@ This guide explains how to compile the project using CMake, focusing on the top-
 - **C++20** compatible compiler (e.g., GCC 10+, Clang 10+, MSVC 2019+)
 - **git** (for fetching some dependencies)
 - **Internet connection** (for fetching dependencies using CPM)
-- **Imagick** (only for color transfer, for image resizing and format conversion (not fetched))
 
 ### Dependencies
 
@@ -60,6 +65,6 @@ the parameters are described with names that match the ones used in the paper.
 
 to reproduce the figure 8, you can execute
 ```bash
-./showcase --input ../data/spot_low_variance.gdp --eta 0.001 --geodesic 
+./showcase --input ../data/spot_low_variance.gdp --eta 0.001 --grid_size 300 --geodesic 
 ./showcase --input ../data/spot_high_variance.gdp --eta 1 --geodesic 
 ```
