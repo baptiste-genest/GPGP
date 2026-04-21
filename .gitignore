@@ -5,17 +5,11 @@
 *.slo
 *.lo
 *.o
-*.obj
+#*.obj
 
 # Precompiled Headers
 *.gch
 *.pch
-
-# Linker files
-*.ilk
-
-# Debugger Files
-*.pdb
 
 # Compiled Dynamic libraries
 *.so
@@ -37,5 +31,7 @@
 *.out
 *.app
 
-# debug information files
-*.dwo
+build/**
+CMakeLists.txt.user*
+benchmarks/build/*
+CMakeLists.txt.user

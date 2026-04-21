@@ -103,16 +103,12 @@ void init () {
     StochasticCalculus::NQMC = qmc;
 
     GaussianDipoles GD = GaussianDipoles(input);
-    // GD.normalize(1.01);
 
-    spdlog::info("loaded {} gaussian position/normal pairs",GD.size());
+    spdlog::info("Loaded {} gaussian position/normal pairs",GD.size());
 
     scalar lfs = GD.estimateScale();
 
-    spdlog::info("estimated scale {}",lfs);
-
-    // StochasticCalculus::max_mu = 10;
-
+    spdlog::info("Estimated scale {}",lfs);
 
 
     polyscope::VolumeGridNodeScalarQuantity* field;
@@ -208,9 +204,7 @@ void init () {
     }
 
     if (HFM) {
-        // int s = GetClosestPoint(NB,ClosestVertex(surf_iso,vec(-0.286,-0.141,-0.191)));
         int s = GetClosestPoint(NB,ClosestVertex(surf_iso,vec(-0.316,-0.113,-0.236)));
-        // int s = GetClosestPoint(NB,MostAlignedVertex(surf_iso,vec(-0.286,-0.141,-0.191)));
         profiler.start();
         calc.precomputeStencils();
         profiler.tick("compute stencils for fast marching",true);
@@ -280,7 +274,6 @@ int main(int argc, char** argv) {
     app.add_option("--beta", beta, "barnes hutt approx parameter (default 3)");
     app.add_option("--eta", eps, "narrow band epsilon (default 0.01)");
     app.add_flag("--spectra",eigenfunction,"number of eigenfunctions to compute (default 0) WARNING CAN BE LONG");
-    // app.add_flag("--hodge",hodge,"Hodge decomposition");
     app.add_flag("--geodesic",HFM,"compute geodesic distance");
     app.add_flag("--green",green,"green's function computation");
     app.add_flag("--naive",naive_laplace,"use naive laplacian instead");
@@ -288,7 +281,6 @@ int main(int argc, char** argv) {
 
     CLI11_PARSE(app, argc, argv);
 
-    // polyscope::options::allowHeadlessBackends = !viz;
     polyscope::init();
     init();
 
