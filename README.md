@@ -69,7 +69,7 @@ To reproduce the figure 8, you can execute:
 ./showcase --input ../data/spot_high_variance.gdp --eta 1 --geodesic 
 ```
 
-You can generate your own Gaussian dipoles files using the soupify problem
+You can generate your own Gaussian dipoles files using the soupify program
 ```bash
 ./soupify --input pathto/mesh.obj --output test.gdp --assumed_noise 1
 ```
