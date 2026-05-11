@@ -10,7 +10,7 @@ This guide explains how to compile the project using CMake, focusing on the top-
 
 ## Requirements
 
-- **CMake** >= 3.12
+- **CMake** >= 3.17
 - **C++20** compatible compiler (e.g., GCC 10+, Clang 10+, MSVC 2019+)
 - **git** (for fetching some dependencies)
 - **Internet connection** (for fetching dependencies using CPM)
@@ -19,14 +19,13 @@ This guide explains how to compile the project using CMake, focusing on the top-
 
 The following libraries are required and are automatically handled by the CMake build system via CPM or included CMake scripts:
 
-- [Eigen3](https://gitlab.com/libeigen/eigen) (version 3.4.0, downloaded automatically)
+- [Eigen3](https://gitlab.com/libeigen/eigen) 
 - [OpenMP](https://www.openmp.org/) (for parallelization, usually provided by your compiler)
 - [Polyscope](https://github.com/nmwsharp/polyscope)
 - [geometry-central](https://github.com/nmwsharp/geometry-central)
 - [spdlog](https://github.com/gabime/spdlog)
 - [Spectra](https://github.com/yixuan/spectra)
 
-All dependencies except Eigen3 are also included via CMake include scripts (see the `cmake/` directory).
 
 ## Step-by-Step Compilation
 
