@@ -72,6 +72,6 @@ You can generate your own Gaussian dipoles files using the soupify program
 ```bash
 ./soupify --input pathto/mesh.obj --output test.gdp --assumed_noise 1
 ```
-## License
+## License
 
 See [LICENSE](LICENSE) for details on the license of this project.
