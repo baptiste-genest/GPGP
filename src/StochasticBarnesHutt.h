@@ -105,7 +105,7 @@ private:
 
     };
 
-    scalar beta = 2.3;
+    scalar beta;
     scalar s;
 
     std::unordered_map<HashKey,StochasticBarnesHuttNode> nodes;

@@ -35,3 +35,8 @@ build/**
 CMakeLists.txt.user*
 benchmarks/build/*
 CMakeLists.txt.user
+
+# polyscope / imgui runtime state
+.polyscope.ini
+imgui.ini
+.cache/
