@@ -81,7 +81,7 @@ SGP::JointKernelTerms<2> SGP::PSR2D::ComputeJointKernelTerms(const vec2 &x, cons
 
     scalar up  = (1.0 - ez) / (2.0 * PI * r);
     scalar upp = (-1.0 + (1.0 + r*r/(s*s))*ez) / (2.0 * PI * r*r);
-    scalar uppp = ((1.0 + r*r/(s*s)) * (-ez) * (r/(s*s)) - 2.0*upp)/r;
+    scalar uppp = ez*(1.0 - r*r/(s*s))/(2.0 * PI * r*s*s) - 2.0*upp/r;
 
     t.grad_u = (up / r) * y;
 
