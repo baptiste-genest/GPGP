@@ -14,7 +14,6 @@
 #include "../src/HamiltonianFastMarching.h"
 #include "Eigen/IterativeLinearSolvers"
 
-#include "../src/BarnesHuttSPSR.h"
 #include "../src/StochasticBarnesHutt.h"
 
 #include "../src/Grid.h"
@@ -113,7 +112,7 @@ void init () {
 
     polyscope::VolumeGridNodeScalarQuantity* field;
     polyscope::VolumeGrid* pcgrid;
-    polyscope::PointCloud* narrow_band;
+    polyscope::SparseVolumeGrid* narrow_band = nullptr;
 
     scalar iso;
 
@@ -164,7 +163,7 @@ void init () {
         iso = narrow.iso;
         calc = HamiltonianFastMarching(narrow);
         profiler.tick("build narrow band and fields",true);
-        pcgrid = PlotNarrowBand(narrow,"narrow");
+        pcgrid = RegisterBBoxGrid(narrow,"narrow");
 
         field = pcgrid->addNodeScalarQuantity("GPIS mean",calc.extendFill(calc.getGPISMean()).data());
         profiler.tick("extend mean field to bounding box grid (for plot only)",true);
@@ -183,8 +182,7 @@ void init () {
 
     auto NB = calc.embedNarrowBand();
 
-    narrow_band = polyscope::registerPointCloud("narrow band",NB.transpose());
-    narrow_band->addScalarQuantity("mu",calc.getMu())->setEnabled(true);
+    narrow_band = PlotNarrowBand(calc);
 
     profiler.start();
     smat M = calc.buildMassMatrix();

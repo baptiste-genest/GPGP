@@ -5,7 +5,6 @@
 #include "../src/HamiltonianFastMarching.h"
 #include "Eigen/IterativeLinearSolvers"
 
-#include "../src/BarnesHuttSPSR.h"
 #include "../src/StochasticBarnesHutt.h"
 
 #include "../src/Grid.h"

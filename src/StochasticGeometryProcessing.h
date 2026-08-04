@@ -199,75 +199,13 @@ template<int D>
 class MultivariateGaussian;
 
 using GaussianValueGradient = MultivariateGaussian<dim+1>;
+using pred = GaussianValueGradient;
 
 struct GPIS {
 
     virtual GaussianValueGradient predict(const Vector<dim>& x) const = 0;
 
 };
-
-
-template<int dim>
-SquareMatrix<dim*dim> kron(const SquareMatrix<dim>& A,const SquareMatrix<dim>& B) {
-    SquareMatrix<dim*dim> C;
-    for (int i = 0; i < dim; i++)
-        for (int j = 0; j < dim; j++)
-            C.block(i*dim,j*dim,dim,dim) = A(i,j)*B;
-    return C;
-}
-
-template<int D>
-smat SparseDiag(const std::vector<SquareMatrix<D>>& d) {
-    int n = d.size();
-    Triplets triplets;
-    triplets.reserve(n*D*D);
-    for (int i = 0; i < n; i++) {
-        const auto& M = d[i];
-        for (int r = 0; r < D; r++)
-            for (int c = 0; c < D; c++)
-                triplets.push_back({i*D+r,i*D+c,M(r,c)});
-    }
-    smat rslt(n*D,n*D);
-    rslt.setFromTriplets(triplets.begin(),triplets.end());
-    return rslt;
-}
-
-
-inline void saveMatrix(std::string fileName, const Mat&  matrix)
-{
-    using namespace std;
-    using namespace Eigen;
-    const static IOFormat CSVFormat(FullPrecision, DontAlignCols, ", ", "\n");
-
-    ofstream file(fileName);
-    if (file.is_open())
-    {
-        file << matrix.format(CSVFormat);
-        file.close();
-    }
-}
-
-
-
-inline Mat LoadMatrix(std::string fileToOpen)
-{
-    using namespace std;
-    using namespace Eigen;
-    vector<scalar> matrixEntries;
-    ifstream matrixDataFile(fileToOpen);
-    string matrixRowString;
-    string matrixEntry;
-
-    int matrixRowNumber = 0;
-    while (getline(matrixDataFile, matrixRowString)) {
-        stringstream matrixRowStringStream(matrixRowString);
-        while (getline(matrixRowStringStream, matrixEntry, ','))
-            matrixEntries.push_back(stod(matrixEntry));
-        matrixRowNumber++;
-    }
-    return Map<Mat>(matrixEntries.data(), matrixRowNumber, matrixEntries.size() / matrixRowNumber);
-}
-
 
 
 }

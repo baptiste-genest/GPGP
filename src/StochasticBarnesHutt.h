@@ -4,12 +4,14 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include <array>
 #include <cmath>
 #include <Eigen/Dense>
 
 #include "StochasticGeometryProcessing.h"
 #include "gaussians.h"
 #include "GaussianPointCloud.h"
+#include "StochasticPoissonSurfaceReconstruction.h"
 
 
 namespace SGP {
@@ -20,15 +22,6 @@ public:
 
     using HashKey = size_t;
     using position = Vector<dim>;
-    const scalar factor = std::sqrt(2/M_PI);
-
-    using kernel = Eigen::Matrix<scalar,dim+1,dim>;
-    using full_kernel = Eigen::Matrix<scalar,dim+1,2*dim>;
-
-    struct PSRKernels {
-        kernel Kn = kernel::Zero(),Kp = kernel::Zero();
-        full_kernel KF = full_kernel::Zero();
-    };
 
 private:
     static constexpr int nb_children = 1 << dim;
@@ -45,12 +38,56 @@ private:
         bool isLeaf = true;
         GaussianDipole<dim> weightedCenter;
         int active_child_mask = 0;
-        // std::array<HashKey,nb_children> children;
+
+        std::array<std::array<SquareMatrix<dim>,dim>,dim> Cmom;
+        std::array<SquareMatrix<dim>,dim> Ccross;
+        SquareMatrix<dim> Cnn = SquareMatrix<dim>::Zero();
 
         HashKey key = 0;
 
-        StochasticBarnesHuttNode(HashKey k,const position& center_, scalar halfSize_) : key(k), center(center_), halfSize(halfSize_) {    }
-        StochasticBarnesHuttNode() {}
+        void addDipole(const GaussianDipole<dim>& b) {
+            scalar w = b.n.norm();
+            weight += w;
+            weightedCenter.p += b.p*w;
+            weightedCenter.n += b.n;
+
+            SquareMatrix<dim> Cpp = b.FullCov.template block<dim,dim>(0,0);
+            SquareMatrix<dim> Cpn = b.FullCov.template block<dim,dim>(0,dim);
+            for (int j = 0; j < dim; ++j) {
+                for (int l = 0; l < dim; ++l)
+                    Cmom[j][l] += b.n(j)*b.n(l)*Cpp;
+                Ccross[j] += b.n(j)*Cpn;
+            }
+            Cnn += b.FullCov.template block<dim,dim>(dim,dim);
+        }
+
+        SquareMatrix<dim+1> assembleCovariance(const JointKernelTerms<dim>& t) const {
+            PoissonKernel<dim> Kn = t.Kn();
+            std::array<PoissonKernel<dim>,dim> P;
+            for (int j = 0; j < dim; ++j)
+                P[j] = t.P(j);
+
+            SquareMatrix<dim+1> C = Kn*Cnn*Kn.transpose();
+            for (int j = 0; j < dim; ++j) {
+                SquareMatrix<dim+1> cross = P[j]*Ccross[j]*Kn.transpose();
+                C += cross + cross.transpose();
+                for (int l = 0; l < dim; ++l)
+                    C += P[j]*Cmom[j][l]*P[l].transpose();
+            }
+            return SquareMatrix<dim+1>(0.5*(C + C.transpose()));
+        }
+
+        void zeroMoments() {
+            for (auto& row : Cmom)
+                for (auto& m : row)
+                    m.setZero();
+            for (auto& m : Ccross)
+                m.setZero();
+            Cnn.setZero();
+        }
+
+        StochasticBarnesHuttNode(HashKey k,const position& center_, scalar halfSize_) : key(k), center(center_), halfSize(halfSize_) { zeroMoments(); }
+        StochasticBarnesHuttNode() { zeroMoments(); }
 
         bool contains(const position& position) const;
 
@@ -71,28 +108,14 @@ private:
     scalar beta = 2.3;
     scalar s;
 
-    // struct IdentityHash {
-    //     size_t operator()(uint64_t x) const noexcept { return (size_t)x; }
-    // };
-
-    // std::unordered_map<HashKey,StochasticBarnesHuttNode,IdentityHash> nodes;
     std::unordered_map<HashKey,StochasticBarnesHuttNode> nodes;
-    // std::map<HashKey,StochasticBarnesHuttNode> nodes;
 
     void insertAtNode(HashKey node_key,const GaussianDipole<dim>& b);
     void compute(HashKey key,const position& p,GaussianValueGradient& rslt) const;
 
-    PSRKernels computeKernels(const Vector<dim>& x,const GaussianDipole<dim>& p) const;
-
-    scalar PSRPotential(const Vector<dim>& p,const GaussianDipole<dim>& q) const;
-
 public:
 
-    void sanityCheck();
-
     StochasticBarnesHutt(scalar s,scalar b,int size = -1) : s(s),beta(b) {
-        // if (size > 0)
-        //     nodes.reserve(size+1);
         nodes[1] = StochasticBarnesHuttNode(1,position::Zero(),1);
     }
 
@@ -112,10 +135,7 @@ public:
 
     GaussianValueGradient predict(const position& b) const override;
 
-    void getCenters(std::vector<Vector<dim>>& C) const;
-
 private:
-    // void subdivide(StochasticBarnesHuttNode& node);
     void inner_computeMaxRadius(HashKey key,std::vector<Vector<dim>>& points_below);
 
     void insertToChildren(HashKey key,const GaussianDipole<dim>& b);

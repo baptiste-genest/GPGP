@@ -1,8 +1,8 @@
 #ifndef NARROWBAND_H
 #define NARROWBAND_H
 
-#include "BarnesHuttSPSR.h"
 #include "StochasticCalculus.h"
+#include "GaussianPointCloud.h"
 
 namespace SGP {
 

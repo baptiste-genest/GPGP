@@ -72,6 +72,17 @@ You can generate your own Gaussian dipoles files using the soupify program
 ```bash
 ./soupify --input pathto/mesh.obj --output test.gdp --assumed_noise 1
 ```
+## Barnes-Hut covariance aggregation
+
+`Kp(x,p,n)` is linear in `n`, so the covariance `FK C FK^T` is quadratic in it. Earlier
+versions aggregated a node's covariance as `(sum n)(sum n)` instead of `sum(n n^T)`, which
+overestimates the position-uncertainty term by about the number of dipoles in the node. The
+mean was correct.
+
+Nodes now store `sum n_j n_l Cpp`, `sum n_j Cpn` and `sum Cnn`. On `spot_high_variance.gdp`
+at the default `beta = 3`, relative error against brute force drops from 3.6 to 0.016 on the
+covariance and from 3.9 to 0.036 on the value/gradient cross-block.
+
 ## License
 
 See [LICENSE](LICENSE) for details on the license of this project.

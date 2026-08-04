@@ -136,16 +136,6 @@ protected:
         return true;
     }
 
-    SliceIndex getGridCoord(int h) const {
-        // get grid coord in bbox from id
-        SliceIndex I;
-        for (int i = 0; i < dim; i++) {
-            I(i) = h % bbox(i);
-            h /= bbox(i);
-        }
-        return I;
-    }
-
     GridEmbedder embedder;
 
     scalar iso;
@@ -202,6 +192,15 @@ public:
 
     inline const NodeMap& getNodes() const {return nodes;}
 
+    SliceIndex getGridCoord(int h) const {
+        SliceIndex I;
+        for (int i = 0; i < dim; i++) {
+            I(i) = h % bbox(i);
+            h /= bbox(i);
+        }
+        return I;
+    }
+
     int bboxSize() const {
         //return number of cubes in bbox
         return bbox.prod();
@@ -255,18 +254,6 @@ struct SparseNarrowBand {
     scalar iso;
     GridEmbedder embedder;
 };
-
-inline mat Rot90(const vec& x) {
-    //build cross product matrix
-    mat R = mat::Zero(3,3);
-    R(0,1) = -x(2);
-    R(0,2) = x(1);
-    R(1,0) = x(2);
-    R(1,2) = -x(0);
-    R(2,0) = -x(1);
-    R(2,1) = x(0);
-    return R;
-}
 
 }
 

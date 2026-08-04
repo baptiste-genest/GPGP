@@ -3,10 +3,42 @@
 
 #include "StochasticCalculus.h"
 #include "polyscope/volume_grid.h"
+#include "polyscope/sparse_volume_grid.h"
 
 namespace SGP {
 
-polyscope::VolumeGrid* PlotNarrowBand(const SparseNarrowBand& narrow,std::string label = "grid") {
+inline polyscope::SparseVolumeGrid* PlotNarrowBand(const StochasticCalculus& calc,std::string label = "narrow band") {
+#ifdef SGP2D
+    return nullptr;
+#else
+    const auto& nodes = calc.getNodes();
+    scalar h = calc.getDx();
+
+    std::vector<glm::ivec3> cells;
+    std::vector<scalar> mu,field;
+    cells.reserve(nodes.size());
+    mu.reserve(nodes.size());
+    field.reserve(nodes.size());
+
+    for (const auto& [hash,node] : nodes) {
+        SliceIndex I = calc.getGridCoord(hash);
+        cells.emplace_back(I(0),I(1),I(2));
+        mu.push_back(node.mu);
+        field.push_back(node.field);
+    }
+
+    Vector<dim> o = calc.getEmbedder() * Vector<dim>::Zero();
+    glm::vec3 origin(o(0) - h/2,o(1) - h/2,o(2) - h/2);
+    glm::vec3 width(h,h,h);
+
+    auto* grid = polyscope::registerSparseVolumeGrid(label,origin,width,cells);
+    grid->addCellScalarQuantity("mu",mu)->setEnabled(true);
+    grid->addCellScalarQuantity("GPIS mean",field);
+    return grid;
+#endif
+}
+
+inline polyscope::VolumeGrid* RegisterBBoxGrid(const SparseNarrowBand& narrow,std::string label = "grid") {
 #ifdef SGP2D
     return nullptr;
 #else
@@ -26,18 +58,6 @@ polyscope::VolumeGrid* PlotNarrowBand(const SparseNarrowBand& narrow,std::string
 #endif
 }
 
-polyscope::SurfaceMesh* ExtractIsoSurface(polyscope::VolumeGrid* pcgrid,const ScalarGrid& phi,scalar isoval) {
-    auto pcg = pcgrid->addNodeScalarQuantity("phi",phi.data());
-    pcg->setIsosurfaceVizEnabled(true);
-    pcg->setIsosurfaceLevel(isoval);
-    auto iso = pcg->registerIsosurfaceAsMesh("iso");
-    iso->setEnabled(true);
-    return iso;
 }
-
-
-
-}
-
 
 #endif // PLOT_H

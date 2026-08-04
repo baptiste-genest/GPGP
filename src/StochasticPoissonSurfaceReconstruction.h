@@ -21,27 +21,72 @@ constexpr scalar PI = 3.14159265358979323846;
 constexpr scalar SQRT_PI = 1.77245385090551602729;
 constexpr scalar EPS_R = 1e-6; // threshold for small-radius series
 
+template<int D>
+struct JointKernelTerms {
+    scalar r = 0;
+    Vector<D> evec = Vector<D>::Zero();
+    Vector<D> grad_u = Vector<D>::Zero();
+    SquareMatrix<D> hess_u = SquareMatrix<D>::Zero();
+    scalar A = 0;
+    scalar Aprime = 0;
+    scalar s = 1;
+    bool degenerate = true;
+
+    SquareMatrix<D> hessOfDot(const Vector<D>& n) const {
+        if (degenerate)
+            return SquareMatrix<D>::Zero();
+        SquareMatrix<D> I = SquareMatrix<D>::Identity();
+        SquareMatrix<D> eeT = evec*evec.transpose();
+        scalar edotn = evec.dot(n);
+        SquareMatrix<D> H = Aprime*edotn*eeT
+                          + (A/r)*edotn*(I - eeT)
+                          + (A/r)*(evec*n.transpose() + n*evec.transpose());
+        return 0.5*(H + H.transpose());
+    }
+
+    PoissonKernel<D> Kn() const {
+        PoissonKernel<D> K;
+        K.row(0) = grad_u.transpose();
+        K.template block<D,D>(1,0) = hess_u;
+        return s*K;
+    }
+
+    PoissonKernel<D> Kp(const Vector<D>& n) const {
+        PoissonKernel<D> K;
+        K.row(0) = (hess_u*n).transpose();
+        K.template block<D,D>(1,0) = hessOfDot(n);
+        return s*K;
+    }
+
+    PoissonKernel<D> P(int j) const { return Kp(Vector<D>::Unit(j)); }
+
+    JointPoissonKernel<D> joint(const Vector<D>& n) const {
+        JointPoissonKernel<D> FK;
+        FK.template block<D+1,D>(0,0) = Kp(n);
+        FK.template block<D+1,D>(0,D) = Kn();
+        return FK;
+    }
+};
+
 namespace PSR2D {
-
-// Factorized function: computes grad_u, hess_u, and hess_of_dot in one pass
-JointPoissonKernel<2> ComputeJointPoissonKernel(const vec2 &x, const vec2 &p, const vec2 &n, scalar s);
-
+JointKernelTerms<2> ComputeJointKernelTerms(const vec2 &x, const vec2 &p, scalar s);
 }
 
-
 namespace PSR3D {
+JointKernelTerms<3> ComputeJointKernelTerms(const vec &x, const vec &p, scalar s);
+}
 
-// Computes gradient, Hessian of u, and Hessian of dot product in one call
-JointPoissonKernel<3> ComputeJointPoissonKernel(const vec &x, const vec &p, const vec &n, scalar s);
-
+template<int D>
+JointKernelTerms<D> ComputeJointKernelTerms(const Vector<D> &x, const Vector<D> &p, scalar s) {
+    if constexpr (D == 2)
+        return PSR2D::ComputeJointKernelTerms(x,p,s);
+    else
+        return PSR3D::ComputeJointKernelTerms(x,p,s);
 }
 
 template<int D>
 JointPoissonKernel<D> ComputeJointPoissonKernel(const Vector<D> &x, const Vector<D> &p, const Vector<D> &n, scalar s) {
-    if constexpr (D == 2)
-        return PSR2D::ComputeJointPoissonKernel(x,p,n,s);
-    else
-        return PSR3D::ComputeJointPoissonKernel(x,p,n,s);
+    return ComputeJointKernelTerms<D>(x,p,s).joint(n);
 }
 
 

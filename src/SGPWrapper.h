@@ -2,7 +2,6 @@
 #define SGPWRAPPER_H
 
 #include "StochasticCalculus.h"
-#include "BarnesHuttSPSR.h"
 #include "StochasticBarnesHutt.h"
 
 namespace SGP {
