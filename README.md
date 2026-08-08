@@ -80,7 +80,7 @@ overestimates the position-uncertainty term by about the number of dipoles in th
 mean was correct.
 
 Nodes now store `sum n_j n_l Cpp`, `sum n_j Cpn` and `sum Cnn`. On `spot_high_variance.gdp`
-at the default `beta = 3`, relative error against brute force drops from 3.6 to 0.016 on the
+at the default `beta = 3`, relative error in the far field against brute force drops from 3.6 to 0.016 on the
 covariance and from 3.9 to 0.036 on the value/gradient cross-block.
 
 ## License
