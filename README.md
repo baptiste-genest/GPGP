@@ -72,16 +72,18 @@ You can generate your own Gaussian dipoles files using the soupify program
 ```bash
 ./soupify --input pathto/mesh.obj --output test.gdp --assumed_noise 1
 ```
-## Barnes-Hut covariance aggregation
+## Fixed Barnes-Hut covariance aggregation
 
-`Kp(x,p,n)` is linear in `n`, so the covariance `FK C FK^T` is quadratic in it. Earlier
-versions aggregated a node's covariance as `(sum n)(sum n)` instead of `sum(n n^T)`, which
-overestimates the position-uncertainty term by about the number of dipoles in the node. The
-mean was correct.
+The original implementation summarised each node by a single aggregate Gaussian dipole naively.
+This is exact for the mean, which is linear in the dipole, but not for the covariance,
+which is quadratic in the normal. It was evaluating a product of sums instead a sum of products.
 
-Nodes now store `sum n_j n_l Cpp`, `sum n_j Cpn` and `sum Cnn`. On `spot_high_variance.gdp`
-at the default `beta = 3`, relative error against brute force drops from 3.6 to 0.016 on the
-covariance and from 3.9 to 0.036 on the value/gradient cross-block.
+A node must therefore accumulate the quadratic form applied to the covariance of the normals
+rather than the Gaussians directly.
+These are additive, so they are still merged bottom-up and complexity is unchanged.
+
+This error is mostly benign, the behaviour displayed in the paper is simply shifted: what was
+visible at a noise level of 5 with the old implem now appears at sigma roughly 8 for instance. 
 
 ## License
 
