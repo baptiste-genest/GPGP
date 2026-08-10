@@ -82,7 +82,8 @@ A node must therefore accumulate the quadratic form applied to the covariance of
 rather than the Gaussians directly.
 These are additive, so they are still merged bottom-up and complexity is unchanged.
 
-This error is mostly benign, the behaviour displayed in the paper is simply shifted: what was
+This error is mostly benign as it was high far from the points,
+the behaviour displayed in the paper is simply shifted: what was
 visible at a noise level of 5 with the old implem now appears at sigma roughly 8 for instance. 
 
 ## License
