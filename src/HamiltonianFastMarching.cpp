@@ -61,10 +61,15 @@ std::vector<SGP::vec> SGP::HamiltonianFastMarching::integrateGeodesic(const vec 
 
     int max_iter = 10000;
     for (auto iter : range(max_iter)) {
-        p -= dt*Grid3D::lerpNonSquare(V,p,E);
-        path.push_back(p);
-        if (std::abs(Grid3D::lerpNonSquare(U,p,E)) < 1e-6)
+        vec v = Grid3D::lerpNonSquare(V,p,E);
+        if (v.norm() < 1e-12)
             break;
+        p -= dt*v.normalized();
+        scalar u = Grid3D::lerpNonSquare(U,p,E);
+        if (u >= val)
+            break;
+        val = u;
+        path.push_back(p);
     }
 
     return path;

@@ -215,7 +215,7 @@ void init () {
         auto V = calc.computeGeodesicVelocityField();
         profiler.tick("extract velocity field",true);
 
-        auto path = calc.integrateGeodesic(MostAlignedVertex(surf_iso,vec(1,0,1)),100,rslt,V);
+        auto path = calc.integrateGeodesic(ClosestVertex(surf_iso,vec(-0.265,0.0192,0.566)),0.1*calc.getDx(),rslt,V);
         profiler.tick("integrate geodesic",true);
         auto curve = polyscope::registerCurveNetworkLine("geodesic",path);
 
